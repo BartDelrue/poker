@@ -11,11 +11,14 @@ const emit = defineEmits<{
   submit: [value: { name: string, options: Score[] }]
 }>()
 
+const form = useTemplateRef('form')
+
 const local = ref({name: props.name, options: [...props.options]})
 watch(props, newProps => local.value = {...newProps})
 const handleSubmit = () => {
   emit('submit', {...local.value})
   open.value = false
+  local.value = {name: '', options: []}
 }
 const open = ref()
 
@@ -41,7 +44,9 @@ onBeforeRouteLeave(() => {
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="name || options.length ? 'Bewerk criterium' : 'Nieuw criterium'">
+  <UModal
+v-model:open="open" :title="name || options.length ? 'Bewerk criterium' : 'Nieuw criterium'"
+          :description="name || options.length ? 'Bewerk criterium' : 'Nieuw criterium'">
     <UButton
         v-if="name || options.length"
         variant="soft"
@@ -59,18 +64,18 @@ onBeforeRouteLeave(() => {
         class="ms-auto"
         @click="open = true"/>
     <template #content>
-      <UForm :state="local" class="p-4" @submit="handleSubmit" :validate>
+      <UForm ref="form" :state="local" class="p-4" :validate @submit="handleSubmit">
+        <UFormField
+            :name="`name`"
+            class="mb-4" label="Criteriumnaam" description="(optioneel)">
+          <UInput v-model="local.name"/>
+        </UFormField>
         <UFormField
             :name="`options`"
             class="mb-4" required description="gescheiden door komma's" label="Opties">
           <UInput
               :model-value="local.options.join(',')"
               @update:model-value="local.options = $event.split(',')"/>
-        </UFormField>
-        <UFormField
-            :name="`name`"
-            class="mb-4" label="Criteriumnaam" description="(optioneel)">
-          <UInput v-model="local.name"/>
         </UFormField>
         <UButton type="submit" :label="name || options.length ? 'Update' : 'Voeg toe'"/>
       </UForm>

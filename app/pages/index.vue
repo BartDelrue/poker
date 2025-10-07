@@ -94,16 +94,16 @@ const validate = (state: { name: string, options: Score[] }[]): FormError[] => {
               type="button"
               @click="newRoomState.splice(i,1)"/>
               <UFormField
+                  :name="`${i}-name`"
+                  class="mb-4" label="Criteriumnaam" description="(optioneel)">
+                <UInput v-model="field.name"/>
+              </UFormField>
+              <UFormField
                   :name="`${i}-options`"
                   class="mb-4" required description="gescheiden door komma's" label="Opties">
                 <UInput
                     :model-value="field.options.join(',')"
                     @update:model-value="field.options = $event.split(',')"/>
-              </UFormField>
-              <UFormField
-                  :name="`${i}-name`"
-                  class="mb-4" label="Criteriumnaam" description="(optioneel)">
-                <UInput v-model="field.name"/>
               </UFormField>
             </fieldset>
             <div class="flex justify-between">

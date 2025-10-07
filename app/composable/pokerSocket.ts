@@ -12,6 +12,8 @@ export const usePokerSocket = function (roomId: string) {
     const onOpen = (cb: () => void) => _onOpen = cb
 
     const updateConfig = ({name, options}: { name: string, options: Score[] }, id?: string) => {
+        // console.log(encodeURIComponent(JSON.stringify({name, options: [...options]})))
+        // console.log(decodeURIComponent(encodeURIComponent(JSON.stringify({name, options: [...options]}))))
         send({
             type: 'config',
             data: {

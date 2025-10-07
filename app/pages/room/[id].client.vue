@@ -30,7 +30,7 @@ const hasMembers = computed<boolean>(() => !!rubric.value?.criteria[0]?.scores.s
   <div class="my-8">
     <h1 class="sr-only">Kamertje {{ room }}</h1>
     <div v-if="rubric?.criteria?.length">
-      <UCard v-for="({scores, options, id, revealed, name}) in rubric?.criteria" :key="id">
+      <UCard v-for="({scores, options, id, revealed, name}) in rubric?.criteria" :key="id" class="mb-8">
         <template #header>
           <div class="flex">
             <h2 class="font-bold text-xl" :class="{ 'sr-only' : !name}">{{ name || 'criterium' }}</h2>
@@ -59,9 +59,6 @@ const hasMembers = computed<boolean>(() => !!rubric.value?.criteria[0]?.scores.s
               :options="options"
               @score="score($event, id)"/>
         </div>
-        <template #footer>
-
-        </template>
       </UCard>
     </div>
     <UCard v-else variant="subtle" class="prose mx-auto mb-8">
