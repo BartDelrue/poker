@@ -9,8 +9,10 @@ const room = useRoute().params.id as string
 const config = useBurnAfterReading(useSharedConfig().config)
 
 const {
-  connectionId,
-  score, toggleReveal,
+  userId,
+  reset,
+  score,
+  toggleReveal,
   rubric,
   updateConfig,
   onOpen
@@ -22,7 +24,7 @@ onOpen(() => {
   }
 })
 
-const hasMembers = computed<boolean>(() => !!rubric.value?.criteria[0]?.scores.size)
+const hasMembers = computed<boolean>(() => !!(rubric.value?.criteria[0]?.scores as ScoreMap).size)
 
 </script>
 
@@ -34,7 +36,6 @@ const hasMembers = computed<boolean>(() => !!rubric.value?.criteria[0]?.scores.s
         <template #header>
           <div class="flex">
             <h2 class="font-bold text-xl" :class="{ 'sr-only' : !name}">{{ name || 'criterium' }}</h2>
-
             <CriteriumConfig
                 :name
                 :options
@@ -45,8 +46,9 @@ const hasMembers = computed<boolean>(() => !!rubric.value?.criteria[0]?.scores.s
         <div class="my-8">
           <ScoreResults
               :scores
+              :members="rubric.members || []"
               :revealed
-              :connection-id
+              :user-id
               @toggle-reveal="toggleReveal(id)"/>
           <p
               v-if="!hasMembers"
@@ -59,6 +61,11 @@ const hasMembers = computed<boolean>(() => !!rubric.value?.criteria[0]?.scores.s
               :options="options"
               @score="score($event, id)"/>
         </div>
+        <template #footer>
+          <div class="flex justify-end">
+            <CriteriumReset @reset="reset([id])"/>
+          </div>
+        </template>
       </UCard>
     </div>
     <UCard v-else variant="subtle" class="prose mx-auto mb-8">
@@ -69,7 +76,7 @@ const hasMembers = computed<boolean>(() => !!rubric.value?.criteria[0]?.scores.s
     </UCard>
     <div class="mt-8">
       <CriteriumConfig
-          @submit="updateConfig( $event)"
+          @submit="updateConfig($event)"
       />
     </div>
   </div>

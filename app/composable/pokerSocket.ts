@@ -3,15 +3,14 @@ export const usePokerSocket = function (roomId: string) {
 
     const rubric = ref<Rubric>()
     const scores = ref(new Map<string, string | null>())
-    const connectionId = ref<string>()
+    const userId = ref<string>()
     const revealed = ref<boolean>(false)
-
 
     let _onOpen = () => {
     }
     const onOpen = (cb: () => void) => _onOpen = cb
 
-    const updateConfig = ({name, options}: { name: string, options: Score[] }, id?: string) => {
+    const updateConfig = ({name, options}: { name: string | undefined, options: Score[] }, id?: string) => {
         // console.log(encodeURIComponent(JSON.stringify({name, options: [...options]})))
         // console.log(decodeURIComponent(encodeURIComponent(JSON.stringify({name, options: [...options]}))))
         send({
@@ -30,8 +29,17 @@ export const usePokerSocket = function (roomId: string) {
     const receiveMessage = (event: MessageEvent) => {
         const {data, type} = JSON.parse(event.data) as PokerMessage
 
+        if (type === 'init' && data) {
+            userId.value = data
+
+            const expires = new Date()
+            expires.setDate(expires.getDate() + 30)
+
+            document.cookie = `ws_user_id=${data}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`
+        }
+
         if (type === 'joined') {
-            connectionId.value = data
+            userId.value = data
         }
 
         if (type === 'scored') {
@@ -47,6 +55,10 @@ export const usePokerSocket = function (roomId: string) {
                 value
             }
         })
+
+    const reset = (criteriumIds: string[]) => send({ type: 'reset', data: {
+            criteriumIds
+        }})
 
 
     const send = (msg: Partial<PokerMessage>) => ws?.send(JSON.stringify({...msg, roomId}))
@@ -66,5 +78,5 @@ export const usePokerSocket = function (roomId: string) {
         ws?.close()
     })
 
-    return {connectionId, scores, score, revealed, toggleReveal, rubric, updateConfig, onOpen}
+    return {userId, scores, score, reset, revealed, toggleReveal, rubric, updateConfig, onOpen}
 }

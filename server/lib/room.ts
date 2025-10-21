@@ -3,13 +3,13 @@ type Peer = Parameters<NonNullable<Parameters<typeof defineWebSocketHandler>[0][
 export class Room {
 
     rubric: Rubric
-    members: Set<Peer>
+    members: Map<string, Set<Peer>>
 
     id: string
     revealed: boolean = false
 
     constructor(id: string) {
-        this.members = new Set()
+        this.members = new Map()
         this.id = id
 
         this.rubric = {
@@ -25,22 +25,33 @@ export class Room {
                 criteria: this.rubric.criteria.map(c => ({
                     ...c,
                     scores: Array.from(c.scores)
-                }))
+                })),
+                members: Array.from(this.members.entries()
+                    .map(([userId, peers]) =>
+                        ({userId, active: peers.size > 0})
+                    )),
             }
         })
     }
 
-    join(peer: Peer, done = () => {
+    join(userId: string, peer: Peer, done = () => {
     }) {
-        this.members.add(peer)
+
+        if (!this.members.has(userId))
+            this.members.set(userId, new Set())
+
+        this.members.get(userId)!.add(peer)
 
         this.rubric
             .criteria
-            .forEach(c => c.scores.set(peer.id, null))
+            .forEach(c => {
+                if (!(c.scores as Map<string, Score>).has(userId))
+                    (c.scores as Map<string, Score>).set(userId, null)
+            })
 
         peer.send(JSON.stringify({
             type: 'joined',
-            data: peer.id
+            data: userId
         }))
 
         this.sendRubric()
@@ -48,10 +59,12 @@ export class Room {
         done()
     }
 
-    score(peer: Peer, {criteriumId, value}: { criteriumId: string, value: string }) {
+    score(userId: string, {criteriumId, value}: { criteriumId: string, value: string }) {
 
         const criterium = this.rubric.criteria.find(c => c.id === criteriumId)
-        criterium?.scores.set(peer.id, value)
+
+        if (criterium)
+            (criterium.scores as Map<string, Score>).set(userId, value)
 
         this.sendRubric()
     }
@@ -65,40 +78,53 @@ export class Room {
         this.sendRubric()
     }
 
-    leave(peer: Peer, done: (count?: number) => void = () => {
+    leave(userId: string, peer: Peer, done: (count?: number) => void = () => {
     }) {
-        console.log(this.members.size)
 
-        this.members.delete(peer)
-        this.rubric
-            .criteria
-            .forEach(c => c.scores.delete(peer.id))
+        if (!this.members.has(userId)) return
+
+        // remove connection
+        this.members.get(userId)!.delete(peer)
+
+        // member has no more active connections
+        if (!this.members.get(userId)?.size) {
+            console.log('member gone')
+        }
+
+        // no active members
+        if (this.members.values().every(v => v.size === 0)) {
+            console.log('no active members')
+            done()
+        }
 
         this.sendRubric()
-        done(this.members.size)
+
     }
 
     broadCast(message: Partial<PokerMessage>) {
-        this.members.forEach(p => p.send(JSON.stringify({
-            ...message,
-            roomId: this.id
-        })))
+        this.members.forEach(
+            m => m.values()
+                .forEach(
+                    p =>
+                        p.send(JSON.stringify({
+                            ...message,
+                            roomId: this.id
+                        }))))
     }
 
-    private addCriterium({name, options}: { name: string, options: Score[] }) {
+    private addCriterium({name, options}: { name?: string, options: Score[] }) {
         this.rubric.criteria.push({
             id: `cr-${
                 this.rubric.criteria.length +
                 (Math.random() + 1).toString(36).slice(-6)}`,
             name,
             options,
-            scores: new Map(this.members.values().map(v => ([v.id, null]))),
+            scores: new Map(this.members.keys().map(userId => ([userId, null]))),
             revealed: false
         })
     }
 
-    updateConfig({id, name, options}: { id?: string, name: string, options: Score[] }) {
-        console.log('hallo!')
+    updateConfig({id, name, options}: { id?: string, name?: string, options: Score[] }) {
         if (!id) this.addCriterium({name, options})
         else {
             const criterium = this.rubric.criteria.find(c => c.id === id)
@@ -106,13 +132,22 @@ export class Room {
 
             criterium.name = name
             criterium.options = options;
-            criterium
-                .scores
+            (criterium.scores as Map<string, Score>)
                 .forEach((value, key, map: Map<string, Score>) => {
                     if (!options.includes(value)) map.set(key, null)
                 })
-
         }
+
+        this.sendRubric()
+    }
+
+    reset({criteriumIds}: {criteriumIds: string[]}) {
+        console.log(criteriumIds)
+        this.rubric.criteria
+            .filter(c => criteriumIds.includes(c.id))
+            .forEach(c =>
+                (c.scores as ScoreMap).forEach((value, key) =>
+                (c.scores as ScoreMap).set(key, null)))
 
         this.sendRubric()
     }

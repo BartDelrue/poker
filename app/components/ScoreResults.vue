@@ -1,7 +1,8 @@
 <script setup lang="ts">
-const {scores} = defineProps<{
-  scores: Scores,
-  connectionId: string | undefined,
+const {scores, members, revealed, userId} = defineProps<{
+  scores: ScoreMap,
+  members: Member[],
+  userId: string | undefined,
   revealed: boolean
 }>()
 
@@ -10,10 +11,15 @@ defineEmits<{
 }>()
 
 const finished = computed<boolean>(() =>
-    Array.from(scores.values())
-        .every(v => !!v)
+    Array.from(scores.entries())
+        .every(([userId, Score]) => !!Score || members?.find(m => m.userId === userId)?.active === false)
 )
 
+const displayValue = ([key, value]: [string, Score]) => {
+  if (revealed) return value
+  if (userId === key) return value ?? '-'
+  return '?'
+}
 
 </script>
 
@@ -22,11 +28,15 @@ const finished = computed<boolean>(() =>
       <span
           v-for="([key, value]) in scores"
           :key="key"
-          :title="connectionId === key ? 'dit ben jij vriend!' : null"
+          :title="userId === key ? 'dit ben jij vriend!' : undefined"
           class="p-4 bg-muted ring  inline-block rounded-lg"
-          :class="connectionId === key ? 'ring-secondary' : 'ring-default'"
+          :class="{
+            'ring-secondary': userId === key,
+            'ring-default': userId !== key,
+            'ring-error text-muted': !members.find(m => m.userId === key)?.active
+          }"
       >
-        {{ revealed || connectionId === key ? value : value ? '?' : '-' }}
+        {{ displayValue([key, value]) }}
       </span>
     <UButton
         :icon="finished ? revealed ? 'i-lucide-eye-closed' : 'i-lucide-eye' : 'i-lucide-eye-off'"

@@ -1,25 +1,31 @@
-export type ScoreMap = Map<string, string | null>;
-export type ScoreArray = ReturnType<typeof Array.from<ScoreMap>>;
+export type ScoreMap = Map<string, Score>;
+export type ScoreArray = [string, Score][];
+export type Member = { userId: string, active: boolean}
 
-type PeerId = string
 export type Score = string | number | null | undefined
 
 export interface Criterium {
     options: Score[],
-    scores: Map<PeerId, Score> | [PeerId, Score][],
+    scores: ScoreMap | ScoreArray,
     revealed: boolean,
     id: string,
     name?: string
 }
 
 export interface Rubric {
-    criteria: Criterium[]
+    criteria: Criterium[],
+    members?: Member[]
 }
 
 interface PokerMessageBase {
     type: string,
     roomId: string,
-    data?: unknown,
+    data?: unknown
+}
+
+interface Initmessage extends PokerMessageBase {
+    type: 'init',
+    data: string
 }
 
 interface JoinMessage extends PokerMessageBase {
@@ -49,11 +55,18 @@ interface ScoreMessage extends PokerMessageBase {
     }
 }
 
+interface ResetMessage extends PokerMessageBase {
+    type: 'reset'
+    data: {
+        criteriumIds: string[],
+    }
+}
+
 interface ConfigMessage extends PokerMessageBase {
     type: 'config',
     data: {
         id?: string,
-        name: string,
+        name?: string,
         options: Score[]
     }
 }
@@ -63,15 +76,13 @@ interface RevealMessage extends PokerMessageBase {
     data: string
 }
 
-export interface Member {
-    id: string
-}
-
 export type PokerMessage =
-    JoinedMessage
+    Initmessage
+    | JoinedMessage
     | JoinMessage
     | LeaveMessage
     | ScoreMessage
     | ScoredMessage
+    | ResetMessage
     | RevealMessage
     | ConfigMessage
