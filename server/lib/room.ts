@@ -142,12 +142,14 @@ export class Room {
     }
 
     reset({criteriumIds}: {criteriumIds: string[]}) {
-        console.log(criteriumIds)
         this.rubric.criteria
             .filter(c => criteriumIds.includes(c.id))
             .forEach(c =>
                 (c.scores as ScoreMap).forEach((value, key) =>
-                (c.scores as ScoreMap).set(key, null)))
+                {
+                    (c.scores as ScoreMap).set(key, null)
+                    c.revealed = false
+                }))
 
         this.sendRubric()
     }
