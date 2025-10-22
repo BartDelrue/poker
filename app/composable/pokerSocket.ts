@@ -60,8 +60,15 @@ export const usePokerSocket = function (roomId: string) {
             criteriumIds
         }})
 
-
     const send = (msg: Partial<PokerMessage>) => ws?.send(JSON.stringify({...msg, roomId}))
+
+    const errorHandler = (e: Event) => {
+        console.error("ws error: ", e)
+    }
+
+    const closeHandler = (e: CloseEvent) => {
+        console.warn("ws closed: ", e)
+    }
 
     onMounted(() => {
         ws = new WebSocket(`ws${import.meta.dev ? '' : 's'}://${window.location.host}/poker/`)
@@ -70,12 +77,16 @@ export const usePokerSocket = function (roomId: string) {
             _onOpen()
         })
         ws.addEventListener("message", receiveMessage)
+        ws.addEventListener("error", errorHandler)
+        ws.addEventListener("close", closeHandler)
     })
 
     onBeforeUnmount(() => {
         ws?.send(JSON.stringify({type: 'leave', roomId}))
         ws?.removeEventListener('message', receiveMessage)
+        ws?.addEventListener("error", errorHandler)
         ws?.close()
+        ws?.removeEventListener("close", closeHandler)
     })
 
     return {userId, scores, score, reset, revealed, toggleReveal, rubric, updateConfig, onOpen}

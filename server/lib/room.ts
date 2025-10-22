@@ -106,10 +106,18 @@ export class Room {
             m => m.values()
                 .forEach(
                     p =>
-                        p.send(JSON.stringify({
-                            ...message,
-                            roomId: this.id
-                        }))))
+
+                    {
+                        try {
+                            p.send(JSON.stringify({
+                                ...message,
+                                roomId: this.id
+                            }))
+                        }
+                        catch (e) {
+                            console.error(e)
+                        }
+                    }))
     }
 
     private addCriterium({name, options}: { name?: string, options: Score[] }) {
