@@ -1,7 +1,6 @@
-export const useBurnAfterReading = function <T>(source: MaybeRef<T | null>): T | null{
-    const value = toValue(source)
-    if (isRef(source)) source.value = null
-    else source = null
+export const useBurnAfterReading = function <T>(source: Ref<T | null>): T | null{
+    const value = source.value
+    source.value = null
 
     return value
 }
