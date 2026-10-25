@@ -6,7 +6,7 @@ import {useSharedConfig} from "~/composable/sharedConfig";
 import {useBurnAfterReading} from "~/composable/burnAfterReading";
 
 const room = useRoute().params.id as string
-const config = useBurnAfterReading(useSharedConfig().config)
+let config = useBurnAfterReading(useSharedConfig().config)
 
 const {
   userId,
@@ -21,6 +21,7 @@ const {
 onOpen(() => {
   if (config) {
     config.forEach(c => updateConfig({...c}))
+    config = null
   }
 })
 
