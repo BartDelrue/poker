@@ -23,6 +23,10 @@ interface PokerMessageBase {
     data?: unknown
 }
 
+interface Pingmessage extends PokerMessageBase {
+    type: 'ping'
+}
+
 interface Initmessage extends PokerMessageBase {
     type: 'init',
     data: string
@@ -78,6 +82,7 @@ interface RevealMessage extends PokerMessageBase {
 
 export type PokerMessage =
     Initmessage
+    | Pingmessage
     | JoinedMessage
     | JoinMessage
     | LeaveMessage

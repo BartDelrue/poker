@@ -1,5 +1,8 @@
 export const usePokerSocket = function (roomId: string) {
     let ws: WebSocket | null = null
+    let retries = 0
+    let retryId: ReturnType<typeof setTimeout> | undefined
+    let pingId: ReturnType<typeof setInterval> | undefined
 
     const rubric = ref<Rubric>()
     const scores = ref(new Map<string, string | null>())
@@ -56,11 +59,17 @@ export const usePokerSocket = function (roomId: string) {
             }
         })
 
-    const reset = (criteriumIds: string[]) => send({ type: 'reset', data: {
+    const reset = (criteriumIds: string[]) => send({
+        type: 'reset', data: {
             criteriumIds
-        }})
+        }
+    })
 
-    const send = (msg: Partial<PokerMessage>) => ws?.send(JSON.stringify({...msg, roomId}))
+    const send = (msg: Partial<PokerMessage>) => {
+        if (ws?.readyState !== WebSocket.OPEN) return
+
+        ws.send(JSON.stringify({...msg, roomId}))
+    }
 
     const errorHandler = (e: Event) => {
         console.error("ws error: ", e)
@@ -68,23 +77,42 @@ export const usePokerSocket = function (roomId: string) {
 
     const closeHandler = (e: CloseEvent) => {
         console.warn("ws closed: ", e)
+
+        clearInterval(pingId)
+
+        retryId = setTimeout(() => {
+            retries++
+            connect()
+        }, Math.min(((retries ** 2) * 1000), 30_000) + Math.floor(Math.random() * 1000))
     }
 
-    onMounted(() => {
+    const connect = () => {
         ws = new WebSocket(`ws${import.meta.dev ? '' : 's'}://${window.location.host}/poker/`)
         ws.addEventListener("open", () => {
-            ws!.send(JSON.stringify({type: 'join', roomId}));
+            retries = 0
+            send({type: 'join'})
+
+            clearInterval(pingId)
+            pingId = setInterval(() => send({type: 'ping'}), 25_000)
+
             _onOpen()
         })
         ws.addEventListener("message", receiveMessage)
         ws.addEventListener("error", errorHandler)
         ws.addEventListener("close", closeHandler)
-    })
+    }
+
+    onMounted(connect)
 
     onBeforeUnmount(() => {
-        ws?.send(JSON.stringify({type: 'leave', roomId}))
+
+        clearTimeout(retryId)
+        clearInterval(pingId)
+
+        send({type: 'leave'})
+
         ws?.removeEventListener('message', receiveMessage)
-        ws?.addEventListener("error", errorHandler)
+        ws?.removeEventListener("error", errorHandler)
         ws?.close()
         ws?.removeEventListener("close", closeHandler)
     })
