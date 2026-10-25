@@ -4,6 +4,7 @@ import {randomUUID} from 'crypto'
 const peerToRooms = new Map<string, Set<Room>>()
 const rooms = new Map<string, Room>()
 const peerToUserId = new Map<string, string>()
+const roomDeleteTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 const parseCookies = function (cookieHeader: string): Record<string, string> {
     if (!cookieHeader) return {}
@@ -41,6 +42,10 @@ export default defineWebSocketHandler({
         const userId = peerToUserId.get(peer.id)
         if (!userId) return;
 
+        if (type === 'join') {
+            clearTimeout(roomDeleteTimers.get(roomId))
+            roomDeleteTimers.delete(roomId)
+        }
         // initial creation
         if (type === 'join' && !rooms.has(roomId)) rooms.set(roomId, new Room(roomId));
 
@@ -72,10 +77,16 @@ export default defineWebSocketHandler({
                 userId,
                 peer,
                 size => {
-                    if (!size) setTimeout(
-                        () => rooms.delete(room.id),
+                    if (size) return
+
+                    clearTimeout(roomDeleteTimers.get(room.id))
+                    roomDeleteTimers.set(room.id, setTimeout(
+                        () => {
+                            rooms.delete(room.id)
+                            roomDeleteTimers.delete(room.id)
+                        },
                         1 * 60 * 60 * 1000
-                    )
+                    ))
                 }))
 
         peerToRooms.delete(peer.id)
