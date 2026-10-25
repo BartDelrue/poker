@@ -1,7 +1,7 @@
 import {Room} from '~~/server/lib/room'
 import {randomUUID} from 'crypto'
 
-const userToRooms = new Map<string, Set<Room>>()
+const peerToRooms = new Map<string, Set<Room>>()
 const rooms = new Map<string, Room>()
 const peerToUserId = new Map<string, string>()
 
@@ -48,7 +48,8 @@ export default defineWebSocketHandler({
         if (!room) return;
 
         if (type === 'join') room.join(userId, peer, () => {
-            if (!userToRooms.has(userId)) userToRooms.set(userId, new Set([room]))
+            if (!peerToRooms.has(peer.id)) peerToRooms.set(peer.id, new Set())
+            peerToRooms.get(peer.id)!.add(room)
         })
 
         if (type === 'score') room.score(userId, data)
@@ -66,7 +67,7 @@ export default defineWebSocketHandler({
         const userId = peerToUserId.get(peer.id)
         if (!userId) return
 
-        userToRooms.get(userId)?.forEach(room =>
+        peerToRooms.get(peer.id)?.forEach(room =>
             room.leave(
                 userId,
                 peer,
@@ -77,7 +78,7 @@ export default defineWebSocketHandler({
                     )
                 }))
 
-        userToRooms.delete(peer.id)
+        peerToRooms.delete(peer.id)
         peerToUserId.delete(peer.id)
     },
 
