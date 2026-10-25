@@ -47,7 +47,7 @@ export default defineWebSocketHandler({
             roomDeleteTimers.delete(roomId)
         }
         // initial creation
-        if (type === 'join' && !rooms.has(roomId)) rooms.set(roomId, new Room(roomId));
+        if (type === 'join' && !rooms.has(roomId)) rooms.set(roomId, new Room(roomId, data));
 
         const room = rooms.get(roomId)
         if (!room) return;

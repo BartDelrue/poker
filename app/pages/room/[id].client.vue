@@ -6,7 +6,7 @@ import {useSharedConfig} from "~/composable/sharedConfig";
 import {useBurnAfterReading} from "~/composable/burnAfterReading";
 
 const room = useRoute().params.id as string
-let config = useBurnAfterReading(useSharedConfig().config)
+const config = useBurnAfterReading(useSharedConfig().config)
 
 const {
   userId,
@@ -14,16 +14,16 @@ const {
   score,
   setRevealed,
   rubric,
-  updateConfig,
-  onOpen
-} = usePokerSocket(room)
+  updateConfig
+} = usePokerSocket(room, config)
 
-onOpen(() => {
-  if (config) {
-    config.forEach(c => updateConfig({...c}))
-    config = null
-  }
-})
+const copyLink = async () => {
+  const criteria = rubric.value?.criteria.map(({name, options}) => ({name: name ?? '', options})) ?? []
+  const {href} = useRouter().resolve({name: 'room-id', params: {id: room}, query: {config: JSON.stringify(criteria)}})
+
+  await navigator.clipboard.writeText(`${window.location.origin}${href}`)
+  useToast().add({title: 'Link gekopieerd, bewaar hem goed!'})
+}
 
 const hasMembers = computed<boolean>(() => !!(rubric.value?.criteria[0]?.scores as ScoreMap).size)
 
@@ -75,10 +75,17 @@ const hasMembers = computed<boolean>(() => !!(rubric.value?.criteria[0]?.scores 
         <p>Dit kamertje is leeg</p>
       </div>
     </UCard>
-    <div class="mt-8">
+    <div class="mt-8 flex gap-4">
       <CriteriumConfig
           @submit="updateConfig($event)"
       />
+      <UButton
+          v-if="rubric?.criteria?.length"
+          variant="soft"
+          color="neutral"
+          label="Kopieer link"
+          icon="i-lucide-link"
+          @click="copyLink"/>
     </div>
   </div>
 </template>

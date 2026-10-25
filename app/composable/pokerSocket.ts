@@ -1,4 +1,4 @@
-export const usePokerSocket = function (roomId: string) {
+export const usePokerSocket = function (roomId: string, config?: { name: string, options: Score[] }[] | null) {
     let ws: WebSocket | null = null
     let retries = 0
     let retryId: ReturnType<typeof setTimeout> | undefined
@@ -90,7 +90,7 @@ export const usePokerSocket = function (roomId: string) {
         ws = new WebSocket(`ws${import.meta.dev ? '' : 's'}://${window.location.host}/poker/`)
         ws.addEventListener("open", () => {
             retries = 0
-            send({type: 'join'})
+            send({type: 'join', data: config ?? undefined})
 
             clearInterval(pingId)
             pingId = setInterval(() => send({type: 'ping'}), 25_000)

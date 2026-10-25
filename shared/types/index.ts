@@ -34,7 +34,7 @@ interface Initmessage extends PokerMessageBase {
 
 interface JoinMessage extends PokerMessageBase {
     type: 'join',
-    data: string
+    data?: { name: string, options: Score[] }[]
 }
 
 interface JoinedMessage extends PokerMessageBase {

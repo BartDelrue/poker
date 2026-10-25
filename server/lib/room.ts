@@ -8,13 +8,15 @@ export class Room {
     id: string
     revealed: boolean = false
 
-    constructor(id: string) {
+    constructor(id: string, config: { name?: string, options: Score[] }[] = []) {
         this.members = new Map()
         this.id = id
 
         this.rubric = {
             criteria: []
         }
+
+        if (Array.isArray(config)) config.forEach(c => this.addCriterium(c))
     }
 
     sendRubric() {
