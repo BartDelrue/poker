@@ -69,12 +69,12 @@ export class Room {
         this.sendRubric()
     }
 
-    toggleReveal(criteriumId: string) {
+    setRevealed({criteriumId, revealed}: {criteriumId: string, revealed: boolean}) {
 
         const criterium = this.rubric.criteria.find(c => c.id === criteriumId)
         if (!criterium) return
 
-        criterium.revealed = !criterium.revealed
+        criterium.revealed = revealed
         this.sendRubric()
     }
 

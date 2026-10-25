@@ -59,7 +59,7 @@ export default defineWebSocketHandler({
 
         if (type === 'score') room.score(userId, data)
 
-        if (type === 'reveal') room.toggleReveal(data)
+        if (type === 'reveal') room.setRevealed(data)
 
         if (type === 'config') room.updateConfig(data)
 

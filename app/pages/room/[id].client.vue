@@ -12,7 +12,7 @@ const {
   userId,
   reset,
   score,
-  toggleReveal,
+  setRevealed,
   rubric,
   updateConfig,
   onOpen
@@ -50,7 +50,7 @@ const hasMembers = computed<boolean>(() => !!(rubric.value?.criteria[0]?.scores 
               :members="rubric.members || []"
               :revealed
               :user-id
-              @toggle-reveal="toggleReveal(id)"/>
+              @toggle-reveal="(r) => setRevealed(id, r)"/>
           <p
               v-if="!hasMembers"
               class="text-center my-4 text-muted text-sm">

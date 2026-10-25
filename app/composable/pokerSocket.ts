@@ -24,9 +24,9 @@ export const usePokerSocket = function (roomId: string) {
         })
     }
 
-    const toggleReveal = (id: string) => send({
+    const setRevealed = (criteriumId: string, revealed: boolean) => send({
         type: 'reveal',
-        data: id
+        data: {criteriumId, revealed}
     })
 
     const receiveMessage = (event: MessageEvent) => {
@@ -117,5 +117,5 @@ export const usePokerSocket = function (roomId: string) {
         ws?.removeEventListener("close", closeHandler)
     })
 
-    return {userId, scores, score, reset, revealed, toggleReveal, rubric, updateConfig, onOpen}
+    return {userId, scores, score, reset, revealed, setRevealed, rubric, updateConfig, onOpen}
 }

@@ -7,7 +7,7 @@ const {scores, members, revealed, userId} = defineProps<{
 }>()
 
 defineEmits<{
-  toggleReveal: []
+  toggleReveal: [revealed: boolean]
 }>()
 
 const finished = computed<boolean>(() =>
@@ -18,7 +18,7 @@ const finished = computed<boolean>(() =>
 const displayValue = ([key, value]: [string, Score]) => {
   if (revealed) return value
   if (userId === key) return value ?? '-'
-  return '?'
+  return value != null ? '?' : '-'
 }
 
 </script>
@@ -43,7 +43,7 @@ const displayValue = ([key, value]: [string, Score]) => {
         :variant="!finished || revealed ? 'soft' : 'solid'"
         :disabled="!finished"
         :label="revealed ? 'Verstoppen!' : 'Piepen!'"
-        @click="$emit('toggleReveal')" />
+        @click="$emit('toggleReveal', !revealed)" />
   </div>
 
 

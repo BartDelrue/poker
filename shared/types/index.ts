@@ -77,7 +77,7 @@ interface ConfigMessage extends PokerMessageBase {
 
 interface RevealMessage extends PokerMessageBase {
     type: 'reveal',
-    data: string
+    data: { criteriumId: string, revealed: boolean }
 }
 
 export type PokerMessage =
