@@ -1,0 +1,15 @@
+node_modules
+.output
+.nuxt
+.nitro
+.cache
+.data
+dist
+.git
+.idea
+.fleet
+*.log
+.env
+.env.*
+Dockerfile
+compose.yaml
